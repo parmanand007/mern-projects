@@ -47,3 +47,32 @@ module.exports.login = async(req,res,next)=>{
         console.log(error.message)
     }
 }
+module.exports.setAvatar = async(req,res,next)=>{
+    try{
+        //   console.log("server is ",req.parms)        
+          const userId=req.params.id;
+          const avatarImage = req.body.image 
+          const userData = await User.findByIdAndUpdate(userId,{
+            isAvatarImageSet:true,
+            avatarImage
+          });
+          return res.json({isSet:userData.isAvatarImageSet,image:userData.avatarImage})
+         }
+    catch(error){
+        next(error)
+        console.log(error.message)
+    }
+}
+module.exports.getAllUsers = async(req,res,next)=>{
+    try{
+
+         const users = await User.find({_id:{$ne:req.params.id}}).select([
+            "email","username","avatarImage","_id",
+         ])
+        return res.json(users)
+        }
+    catch(error){
+        next(error)
+        console.log(error.message)
+    }
+}

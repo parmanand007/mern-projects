@@ -1,16 +1,18 @@
-import React, { useEffect, useState } from 'react'
-import { ToastContainer } from 'react-toastify';
-import styled from "styled-components"
-import "react-toastify/dist/ReactToastify.css"
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { Buffer } from 'buffer/';
+import React, { useEffect, useState } from "react";
+import { toast, ToastContainer } from "react-toastify";
+import styled from "styled-components";
+import "react-toastify/dist/ReactToastify.css";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import loader from "../assets/loader.gif";
+import { Buffer } from "buffer/";
+import { setAvatarRoute } from "../utils/APIRoutes";
 const SetAvatar = () => {
-  const api = "https://api.multiavatar.com/45678945"
-  const navigate = useNavigate()
-  const [avatars,setAvatars]=useState([]);
-  const [isLoading,setisLoading]=useState(true)
-  const [selectedAvatar,setSelectedAvatar] = useState([])
+  const api = "https://api.multiavatar.com/";
+  const navigate = useNavigate();
+  const [avatars, setAvatars] = useState([]);
+  const [isLoading, setisLoading] = useState(true);
+  const [selectedAvatar, setSelectedAvatar] = useState(undefined);
   const toastOptions = {
     position: "bottom-right",
     autoClose: 8000,
@@ -19,80 +21,159 @@ const SetAvatar = () => {
     theme: "dark",
   };
 
-
+  useEffect(() => {
+    if (!localStorage.getItem("chat-app-user")) {
+      navigate("/login");
+    }
+  }, []);
   function randomNumber(length) {
-    return Math.floor(Math.pow(10, length-1) + Math.random() * (Math.pow(10, length) - Math.pow(10, length-1) - 1));
+    return Math.floor(
+      Math.pow(10, length - 1) +
+        Math.random() * (Math.pow(10, length) - Math.pow(10, length - 1) - 1)
+    );
   }
-  
-     
-  let data = []
-  const fetchRandomAvatar = async () => {
-   
-        try {
-            while (data.length < 4){
-                const image = await axios.get(`${api}${randomNumber(10)}`)
-                const buffer = new Buffer(image.data)
-                
-                data.push(buffer.toString("base64"))
-            }
-        
-        // for(let i=0;i<4;i++){
-           
-        //     if(data.length==3) break
-        // }
 
-      } catch (error) {
-          
-        console.error('Error fetching avatar:', error);
+  let data = [];
+  const numberOfImages = 4;
+  let count = 0;
+  const fetchRandomAvatar = async () => {
+    try {
+      while (count < numberOfImages) {
+        const image = await axios.get(`${api}${randomNumber(10)}`);
+        const buffer = new Buffer(image.data);
+
+        data.push(buffer.toString("base64"));
+        count += 1;
       }
-    
+    } catch (error) {
+      console.error("Error fetching avatar:", error);
+    }
 
     setAvatars(data);
     setisLoading(false);
   };
 
+  const setProfilePicture = async () => {
+    if (selectedAvatar === undefined) {
+      toast.error("Please select an avatar", toastOptions);
+    } else {
+      const user = await JSON.parse(localStorage.getItem("chat-app-user"));
+      const { data } = await axios.post(`${setAvatarRoute}/${user._id}`, {
+        image: avatars[selectedAvatar],
+      });
+      console.log("jlfdljlfdjljfl", data);
+      if (data.isSet) {
+        user.isAvatarImageSet = true;
+        user.avatarImage = data.image;
+        localStorage.setItem("chat-app-user", JSON.stringify(user));
+        setisLoading(false)
+        console.log("log lfjl navigate upper")
+        navigate("/");
+        console.log("navigate to home")
 
-const setProfilePicture =async()=>{};
-useEffect(()=>{
-    
+      } else {
+        toast.error("Error setting avatar.Please try again", toastOptions);
+      }
+    }
+  };
+  useEffect(() => {
     fetchRandomAvatar();
-    console.log("inside useeffect",data)
-},[])
+  }, []);
   return (
-        <>
-        
-   <Container>
-   <div className="title-container">
-    <h1>Pick an avatar as your profile picture</h1>
-   </div>
-  <div className="avatars">
-{
-    avatars.map((avatar,index) =>{
-   
-        return (
-            <div
-            key={index} 
-            className={`avatar ${
-                selectedAvatar === index ? "selected": ""
-            }`}
-            >
-                <img
-                src={`data:image/svg+xml;base64,${avatar}`}
-                alt="avatar"
-                onClick={()=>setSelectedAvatar(index)}                
-                />
+    <>
+      {isLoading ? (
+        <Container>
+          <img src={loader} alt="" className="loader" />
+        </Container>
+      ) : (
+        <Container>
+          <div className="title-container">
+            <h1>Pick an avatar as your profile picture</h1>
+          </div>
+          <div className="avatars">
+            {avatars.map((avatar, index) => {
+              return (
+                <div
+                  key={index}
+                  className={`avatar ${
+                    selectedAvatar === index ? "selected" : ""
+                  }`}
+                >
+                  <img
+                    src={`data:image/svg+xml;base64,${avatar}`}
+                    alt="avatar"
+                    onClick={() => setSelectedAvatar(index)}
+                  />
+                </div>
+              );
+            })}
+          </div>
+          <button className="submit-btn" onClick={setProfilePicture}>
+            Set as Profile Picture
+          </button>
+        </Container>
+      )}
 
-            </div>
-        )
-    })
-}
-  </div>
-   </Container>
-   <ToastContainer />
-   </>
-  )
-}
+      <ToastContainer />
+    </>
+  );
+};
 
-const Container = styled.div``;
+const Container = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  gap: 3rem;
+  background-color: #131324;
+  height: 100vh;
+  width: 100vw;
+  .loader {
+    max-inline-size: 100%;
+  }
+  .title-container {
+    h1 {
+      color: white;
+    }
+  }
+  .avatars {
+    display: flex;
+    gap: 2rem;
+    .avatar {
+      border: 0.4rem solid transparent;
+      padding: 0.4rem;
+      border-radius: 5rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: 0.5s ease-in-out;
+      img {
+        height: 6rem;
+      }
+      h1 {
+        color: white;
+      }
+    }
+
+    .selected {
+      border: 0.4rem solid #4e0eff;
+    }
+  }
+  .submit-btn {
+    background-color: #997af0;
+    color: white;
+    padding: 1rem 2rem;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 0.4rem;
+    font-size: 1rem;
+    text-transform: uppercase;
+    transition: 0.5s ease-in-out;
+    &:hover {
+      background-color: #430eff;
+    }
+  }
+`;
 
 export default SetAvatar;

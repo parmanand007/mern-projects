@@ -20,7 +20,8 @@ const Login = () => {
 
   useEffect(()=>{
     if(localStorage.getItem("chat-app-user")){
-      navigate('/')
+      navigate('/chat')
+      console.log("login get")
     } 
   },[])
 
@@ -41,7 +42,7 @@ const Login = () => {
         }
         if(data.status == true){
           localStorage.setItem('chat-app-user',JSON.stringify(data.user))
-          navigate("/"); 
+          navigate("/chat"); 
         }
 
     }
