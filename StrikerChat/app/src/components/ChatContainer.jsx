@@ -9,7 +9,6 @@ import axios from 'axios'
 import { getAllMessageRoute, sendMessageRoute } from '../utils/APIRoutes'
 const ChatContainer = ({currentChat,currentUser,socket}) => {
 // const navigate = useNavigate()
-console.log("A==============>")
 const [messages,setMessages] = useState([])
 const [arrivalMessage,setArrivalMessage] = useState(null)
 const scrollRef =useRef() 

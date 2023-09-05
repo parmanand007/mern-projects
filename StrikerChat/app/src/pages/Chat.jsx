@@ -19,9 +19,6 @@ const getCurrentUser= async()=>{
   
   const currUser= await JSON.parse(localStorage.getItem("chat-app-user"))
   setCurrentUser(currUser)
-  console.log("getCurrent user",currentUser)
-  console.log("getCur= user",currUser)
-  console.log("getCurrent againn user",currentUser)
   
 }
 useEffect(()=>{
@@ -32,7 +29,6 @@ useEffect(()=>{
    else{
     getCurrentUser();
     setIsLoaded(true)
-    console.log("useeffect get current user ",currentUser)
   }
   
   
@@ -48,7 +44,6 @@ useEffect(()=>{
 const getAllUsers= async(currentUser)=>{
   const data=await axios.get(`${allUserRoute}/${currentUser._id}`);
   setContacts(data.data)
-  console.log("getAll user",data)
 }
 
 useEffect(()=>{
@@ -68,12 +63,11 @@ const handleChatChange =(chat)=>{
 
 return (
   <Container>
-      {console.log("render get current user ",currentUser)}
     <div className="container">
        <Contact contacts= {contacts} currentUser={currentUser} changeChat={handleChatChange}/>
       {
-        isLoaded ||
-        currentChat ===undefined?
+        isLoaded &&
+        currentChat ===undefined && currentUser != undefined?
         <Welcome currentUser={currentUser}/>:(
           <ChatContainer 
           socket={socket}          
